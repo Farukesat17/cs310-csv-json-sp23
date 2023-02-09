@@ -2,6 +2,10 @@ package edu.jsu.mcis.cs310;
 
 import com.github.cliftonlabs.json_simple.*;
 import com.opencsv.*;
+import java.io.StringReader;
+import java.util.List;
+import java.io.StringWriter;
+import java.text.DecimalFormat;
 
 public class Converter {
     
@@ -74,37 +78,110 @@ public class Converter {
     @SuppressWarnings("unchecked")
     public static String csvToJson(String csvString) {
         
-        String result = "{}"; // default return value; replace later!
+         String result = "{}"; // default return value; replace later!
         
         try {
         
-            // INSERT YOUR CODE HERE
+            CSVReader reader = new CSVReader(new StringReader(csvString));
+            List<String[]> lines = reader.readAll();
+            String[] headers = lines.get(0);
             
+            JsonArray colHeadings = new JsonArray();
+            JsonArray prodnumbers = new JsonArray();
+            JsonArray alldata = new JsonArray();
+            
+            JsonObject json = new JsonObject();
+            
+            for (int j = 0; j < headers.length ; j++) {
+                colHeadings.add(headers[j]);
+            }
+
+            for (int i = 1; i < lines.size(); i++) {               
+                String[] values = lines.get(i); 
+                prodnumbers.add(values[0]);               
+                JsonArray data = new JsonArray();
+                for(int k=1; k<values.length;k++){
+                    if (k == colHeadings.indexOf("Season") || k == colHeadings.indexOf("Episode")) {
+                        data.add(Integer.valueOf(values[k])); 
+                    }
+                    else {
+                        data.add(values[k]); 
+                    }
+                }    
+                alldata.add(data);
+            }
+ 
+            json.put("ProdNums", prodnumbers);
+            json.put("ColHeadings", colHeadings);
+            json.put("Data", alldata);     
+           
+            result = Jsoner.serialize(json);
         }
+        
         catch (Exception e) {
             e.printStackTrace();
         }
         
         return result.trim();
-        
+    
     }
+    
     
     @SuppressWarnings("unchecked")
     public static String jsonToCsv(String jsonString) {
         
-        String result = ""; // default return value; replace later!
+        String result = ""; 
+        DecimalFormat decimalFormat = new DecimalFormat("00");
         
         try {
+           
+            JsonObject jsonObject = Jsoner.deserialize(jsonString, new JsonObject());
             
-            // INSERT YOUR CODE HERE
+            JsonArray colheadings = new JsonArray();
+            colheadings=(JsonArray) (jsonObject.get("ColHeadings"));
             
+            JsonArray pnumber = new JsonArray();
+            pnumber=(JsonArray) (jsonObject.get("ProdNums"));
+            
+            JsonArray dataall = new JsonArray();
+            dataall=(JsonArray) (jsonObject.get("Data"));
+            
+            StringWriter stringWriter = new StringWriter();
+            CSVWriter csvWriter = new CSVWriter(stringWriter, ',', '"', '\\', "\n");
+            
+            String[] headings = new String[colheadings.size()];
+            for (int i = 0; i < colheadings.size(); i++) {
+                headings[i] = colheadings.get(i).toString();
+            }
+            csvWriter.writeNext(headings);
+            
+            for(int i = 0;i < pnumber.size();i++){
+                String[] row= new  String[colheadings.size()];
+                JsonArray data = new JsonArray(); 
+                data=(JsonArray) dataall.get(i);
+                
+                row[0] = pnumber.get(i).toString();
+                for (int j = 0; j < data.size(); j++) {
+                    if(data.get(j)==data.get(colheadings.indexOf("Episode")-1)){
+                        int number = Integer.parseInt(data.get(j).toString());
+                        String formattedNumber = "";
+                        formattedNumber = decimalFormat.format(number);
+                        row[j + 1] = formattedNumber;
+                    }
+                    
+                    else{
+                        row[j + 1] = data.get(j).toString();
+                    }
+                }
+                csvWriter.writeNext(row);
+            }
+            result = stringWriter.toString();
         }
         catch (Exception e) {
             e.printStackTrace();
         }
         
         return result.trim();
-        
     }
     
 }
