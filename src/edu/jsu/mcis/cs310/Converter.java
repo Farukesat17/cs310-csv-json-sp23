@@ -87,20 +87,20 @@ public class Converter {
             String[] headers = lines.get(0);
             
             JsonArray colHeadings = new JsonArray();
-            JsonArray prodnumbers = new JsonArray();
-            JsonArray alldata = new JsonArray();
+            JsonArray prodNum = new JsonArray();
+            JsonArray allData = new JsonArray();
             
             JsonObject json = new JsonObject();
             
-            for (int j = 0; j < headers.length ; j++) {
+            for(int j = 0; j < headers.length ; j++) {
                 colHeadings.add(headers[j]);
             }
 
             for (int i = 1; i < lines.size(); i++) {               
                 String[] values = lines.get(i); 
-                prodnumbers.add(values[0]);               
+                prodNum.add(values[0]);               
                 JsonArray data = new JsonArray();
-                for(int k=1; k<values.length;k++){
+                for(int k=1; k < values.length;k++){
                     if (k == colHeadings.indexOf("Season") || k == colHeadings.indexOf("Episode")) {
                         data.add(Integer.valueOf(values[k])); 
                     }
@@ -108,17 +108,17 @@ public class Converter {
                         data.add(values[k]); 
                     }
                 }    
-                alldata.add(data);
+                allData.add(data);
             }
  
-            json.put("ProdNums", prodnumbers);
+            json.put("ProdNums", prodNum);
             json.put("ColHeadings", colHeadings);
-            json.put("Data", alldata);     
+            json.put("Data", allData);     
            
             result = Jsoner.serialize(json);
         }
         
-        catch (Exception e) {
+        catch(Exception e) {
             e.printStackTrace();
         }
         
@@ -128,56 +128,57 @@ public class Converter {
     
     
     @SuppressWarnings("unchecked")
-    public static String jsonToCsv(String jsonString) {
+    public static String jsonToCsv(String jsonString){
         
         String result = ""; 
         DecimalFormat decimalFormat = new DecimalFormat("00");
         
         try {
            
-            JsonObject jsonObject = Jsoner.deserialize(jsonString, new JsonObject());
+            JsonObject JsonObject = Jsoner.deserialize(jsonString, new JsonObject());
             
-            JsonArray colheadings = new JsonArray();
-            colheadings=(JsonArray) (jsonObject.get("ColHeadings"));
+            JsonArray colHeading = new JsonArray();
+            colHeading = (JsonArray) (JsonObject.get("ColHeadings"));
             
-            JsonArray pnumber = new JsonArray();
-            pnumber=(JsonArray) (jsonObject.get("ProdNums"));
+            JsonArray prodNum = new JsonArray();
+            prodNum = (JsonArray) (JsonObject.get("ProdNums"));
             
-            JsonArray dataall = new JsonArray();
-            dataall=(JsonArray) (jsonObject.get("Data"));
+            JsonArray allData = new JsonArray();
+            allData = (JsonArray) (JsonObject.get("Data"));
             
             StringWriter stringWriter = new StringWriter();
-            CSVWriter csvWriter = new CSVWriter(stringWriter, ',', '"', '\\', "\n");
+            CSVWriter CSVWriter = new CSVWriter(stringWriter, ',', '"', '\\', "\n");
             
-            String[] headings = new String[colheadings.size()];
-            for (int i = 0; i < colheadings.size(); i++) {
-                headings[i] = colheadings.get(i).toString();
+            String[] eachHeading = new String[colHeading.size()];
+            for (int i = 0; i < colHeading.size(); i++) {
+                eachHeading[i] = colHeading.get(i).toString();
             }
-            csvWriter.writeNext(headings);
+            CSVWriter.writeNext(eachHeading);
             
-            for(int i = 0;i < pnumber.size();i++){
-                String[] row= new  String[colheadings.size()];
-                JsonArray data = new JsonArray(); 
-                data=(JsonArray) dataall.get(i);
+            for(int i = 0;i < prodNum.size();i++){
+                String[] row = new  String[colHeading.size()];
+                JsonArray eachData; 
+                eachData = new JsonArray();
+                eachData = (JsonArray)allData.get(i);
                 
-                row[0] = pnumber.get(i).toString();
-                for (int j = 0; j < data.size(); j++) {
-                    if(data.get(j)==data.get(colheadings.indexOf("Episode")-1)){
-                        int number = Integer.parseInt(data.get(j).toString());
+                row[0] = prodNum.get(i).toString();
+                for (int j = 0; j < eachData.size(); j++) {
+                    if(eachData.get(j) == eachData.get(colHeading.indexOf("Episode") - 1)){
+                        int number = Integer.parseInt(eachData.get(j).toString());
                         String formattedNumber = "";
                         formattedNumber = decimalFormat.format(number);
                         row[j + 1] = formattedNumber;
                     }
                     
                     else{
-                        row[j + 1] = data.get(j).toString();
+                        row[j + 1] = eachData.get(j).toString();
                     }
                 }
-                csvWriter.writeNext(row);
+                CSVWriter.writeNext(row);
             }
             result = stringWriter.toString();
         }
-        catch (Exception e) {
+        catch(Exception e){
             e.printStackTrace();
         }
         
